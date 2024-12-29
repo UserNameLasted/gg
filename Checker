@@ -1,0 +1,349 @@
+import os
+import sys
+import tkinter as tk
+from tkinter import ttk
+from tkinter.scrolledtext import ScrolledText
+from PIL import Image, ImageTk, ImageDraw
+import shutil
+from pathlib import Path
+import ctypes
+import threading
+import time
+from tkinter import Toplevel
+import platform
+import psutil
+import tkinter as tk
+from PIL import Image, ImageTk
+
+help_texts = {
+    "Everything": {
+        "text": "kami | Impact | Wurst | inertia | LiquidBounce | Sigma | NeverHook | Zamorozka | Minced | Wexside | Shit | Expensive | Wild | Fluger | keazclient | xray | x-ray | meteor | BlackBerry | Nursultan | Avalone | Rockstar | Akrien | Rich | celestial | calestial | deadcode | nova-dev | BebraWare | RynWare | Neverware | Aristois | FreeCam | Baritone | Jigsaw | Salhack | Ares | Meteorclient | CheatClientJex | Wolfram | WWE | BleachHack | Matix | pivoclient | cabaletta | GishCode | Eternity | RichPremium | R3D | boberware | nurik | .celka | celka | .akr | .wex | .nur | Ponos | EmortalityClient | Dreampool | Clowdy | Rasty | DiamondSim | AutoAttack | Jessica | InvMove | TopkaAutoBuy | ElytraSwap | ArmorHotSwap | GoProne | autofish | Element3D | BabkaLogs ",
+        "image": None
+    },
+    "ProcessHacker": {
+        "text": "bushroot\nDerick1337\nSQUAD\nneathitbox\nonUpdate\ntickUpdate\nGuiSlider;I)V\nHitbox [SIZE\nch0ffa_box\nGlowEsp\nzh_cn.json\naeshb\ndev.sxmurxy.topkahitboxes.helpers.render.GlowFilter$GlowRender\nCREATED_BY_WHYMAKUD\npaster idi naxuy\n11max_align_t\njojmod/Dupe.class\ncom/modid/HH/Gui\n[]_^A^YZAXAYAZA[\nrogalik\nbaritone\n@markcls\nzdcoder\n..destruct\n0getenv\ntriggerbot\ngwU]cumFVtfvAKiyaq\n0JrPGmv5ePyzMTQ.class\n(Ljava/io/DataOutputStream;Ljava/util/Scanner;)\nstubborn.website\nenergy\nexpensive\nXAX[XAXA[XAZAX",
+        "image": None
+    },
+    "SystemInformer": {
+        "text": "bushroot\nDerick1337\nSQUAD\nneathitbox\nonUpdate\ntickUpdate\nGuiSlider;I)V\nHitbox [SIZE\nch0ffa_box\nGlowEsp\nzh_cn.json\naeshb\ndev.sxmurxy.topkahitboxes.helpers.render.GlowFilter$GlowRender\nCREATED_BY_WHYMAKUD\npaster idi naxuy\n11max_align_t\njojmod/Dupe.class\ncom/modid/HH/Gui\n[]_^A^YZAXAYAZA[\nrogalik\nbaritone\n@markcls\nzdcoder\n..destruct\n0getenv\ntriggerbot\ngwU]cumFVtfvAKiyaq\n0JrPGmv5ePyzMTQ.class\n(Ljava/io/DataOutputStream;Ljava/util/Scanner;)\nstubborn.website\nenergy\nexpensive\nXAX[XAXA[XAZAX",
+        "image": None
+    },
+    "RegScanner": {
+        "text": "Celestial, Nursultan, Expensive, nova-dev, Akrien, WexSide, DeadCode, Wild, Avalon, Troxill, calestial, DreamPool, Excellent, inegay, Wissend, Elysium, Aurora, Verist\nHKLM\SOFTWARE\Microsoft\FuzzyDS\, HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\\",
+        "image": "help/reg.png",
+    }
+}
+
+def show_help_frame(root, program_name, help_data):
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    frame = tk.Frame(root, bg="black", bd=5, relief="solid")
+    frame.pack(fill=tk.BOTH, expand=True)
+
+    label = tk.Label(
+        frame,
+        text=f"Помощь для {program_name}",
+        bg="black",
+        fg="white",
+        font=("Arial", 16),
+        pady=10
+    )
+    label.pack()
+
+    help_text_widget = ScrolledText(
+        frame,
+        bg="black",
+        fg="white",
+        font=("Arial", 12),
+        wrap=tk.WORD,
+        padx=10,
+        pady=10,
+        insertbackground="white"
+    )
+    help_text_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    help_text = help_data.get("text", "Не завезли")
+    help_text_widget.insert(tk.END, help_text + "\n\n")
+
+    image_path = help_data.get("image")
+    if image_path:
+        full_image_path = os.path.join(ASSETS_FOLDER, image_path)
+        if os.path.exists(full_image_path):
+            try:
+                image = Image.open(full_image_path).resize((300, 300), Image.Resampling.LANCZOS)
+                img_tk = ImageTk.PhotoImage(image)
+
+                image_label = tk.Label(help_text_widget, image=img_tk, bg="black", cursor="hand2")
+                image_label.image = img_tk
+                image_label.pack(anchor="center")
+
+                help_text_widget.window_create(tk.END, window=image_label)
+                help_text_widget.insert(tk.END, "\n")
+
+                image_label.bind("<Button-1>", lambda e: show_image_popup(full_image_path))
+
+            except Exception as e:
+                print(f"Ошибка загрузки изображения: {e}")
+        else:
+            print(f"Файл изображения отсутствует: {full_image_path}")
+
+    help_text_widget.configure(state="disabled")
+
+    back_button = tk.Button(
+        frame,
+        text="Назад",
+        command=lambda: display_programs(root, help_texts),
+        bg="red",
+        fg="white",
+        font=("Arial", 12),
+        relief="flat",
+        padx=10,
+        pady=5
+    )
+    back_button.pack(side=tk.BOTTOM, pady=10)
+
+
+def show_image_popup(image_path):
+    try:
+        popup = tk.Toplevel()
+        popup.title("Увеличенное изображение")
+
+        image = Image.open(image_path)
+        img_tk = ImageTk.PhotoImage(image)
+
+        label = tk.Label(popup, image=img_tk)
+        label.image = img_tk
+        label.pack()
+
+        popup.geometry(f"{image.width}x{image.height}")
+        popup.resizable(False, False)
+
+    except Exception as e:
+        print(f"Ошибка отображения увеличенного изображения: {e}")
+
+
+def install_programs(progress_callback):
+    if not os.path.exists(ASSETS_FOLDER):
+        os.makedirs(ASSETS_FOLDER)
+
+    if not os.path.exists(HELP_FOLDER):
+        progress_callback("Папка Help отсутствует. Пропуск установки.")
+        return
+
+    total_files = len(INSTALL_PATHS)
+    completed = 0
+
+    for folder_name, install_path in INSTALL_PATHS.items():
+        src_folder = os.path.join(HELP_FOLDER, folder_name)
+        if os.path.exists(src_folder):
+            progress_callback(f"Скачиваю {folder_name} в {install_path}")
+            try:
+                copy_folder(src_folder, install_path)
+                progress_callback(f"Успешно скачано {folder_name} в {install_path}")
+            except Exception as e:
+                progress_callback(f"Ошибка копирования {folder_name}: {e}")
+        else:
+            progress_callback(f"Пропуск {folder_name}, папка отсутствует.")
+        completed += 1
+        yield int((completed / total_files) * 100)
+
+def show_loading_screen(root, on_complete):
+    loading_screen = tk.Toplevel(root)
+    loading_screen.title("Загрузка")
+    loading_screen.geometry("500x400")
+    loading_screen.configure(bg="black")
+    loading_screen.overrideredirect(True)
+
+    x = root.winfo_screenwidth() // 2 - 250
+    y = root.winfo_screenheight() // 2 - 200
+    loading_screen.geometry(f"500x400+{x}+{y}")
+
+    loading_label = tk.Label(
+        loading_screen, text="Проверка файлов...", bg="black", fg="white", font=("Arial", 12)
+    )
+    loading_label.pack(pady=20)
+
+    progress_bar = ttk.Progressbar(loading_screen, orient="horizontal", length=400, mode="determinate")
+    progress_bar.pack(pady=20)
+
+    def run_loading():
+        try:
+            for progress in install_programs(lambda msg: loading_label.config(text=msg)):
+                progress_bar["value"] = progress
+                loading_screen.update_idletasks()
+                time.sleep(0.1)
+        finally:
+            loading_screen.destroy()
+            on_complete()
+
+    threading.Thread(target=run_loading, daemon=True).start()
+
+def on_program_right_click(event, program_name, help_texts):
+    help_text = help_texts.get(program_name, {"text": "Не завезли", "image": "help/zavoz.png"})
+    show_help_frame(event.widget.master.master.master, program_name, help_text)
+
+BASE_FOLDER = os.path.dirname(os.path.abspath(__file__))
+SOURCE_PROGRAMS_FOLDER = os.path.join(BASE_FOLDER, "Programs")
+HELP_FOLDER = os.path.join(SOURCE_PROGRAMS_FOLDER, "Help")
+ASSETS_FOLDER = os.path.join(SOURCE_PROGRAMS_FOLDER, "Assets")
+DEST_FOLDER = r"C:\\Cloud Checker"
+DEST_PROGRAMS_FOLDER = SOURCE_PROGRAMS_FOLDER
+INSTALL_PATHS = {
+    "Process Hacker 2": r"C:\\Program Files\\",
+    "SystemInformer": r"C:\\Program Files\\",
+    "Everything": r"C:\\Program Files (x86)\\",
+}
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+def run_as_admin():
+    if not is_admin():
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+        sys.exit()
+
+def copy_folder(src, dst):
+    if os.path.exists(dst):
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+
+def create_squircle_icon(icon_path, size, radius, bg_color="#333333"):
+    if icon_path and os.path.exists(icon_path):
+        icon = Image.open(icon_path).resize(size, Image.Resampling.LANCZOS)
+    else:
+        icon = Image.new("RGB", size, bg_color)
+
+    squircle_icon = Image.new("RGBA", size, (0, 0, 0, 0))
+    mask = Image.new("L", size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle((0, 0, size[0], size[1]), radius=radius, fill=255)
+    squircle_icon.paste(icon, (0, 0), mask)
+    return squircle_icon
+
+def display_programs(root, help_texts):
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    canvas = tk.Canvas(root, bg="#000000", highlightthickness=0)
+    canvas.pack(fill=tk.BOTH, expand=True)
+
+    frame = tk.Frame(canvas, bg="#000000")
+    frame.pack(pady=10)
+
+    max_columns = 4
+    row, column = 0, 0
+
+    programs = []
+    if os.path.exists(DEST_PROGRAMS_FOLDER):
+        for file in os.listdir(DEST_PROGRAMS_FOLDER):
+            if file.endswith(".exe"):
+                exe_path = os.path.join(DEST_PROGRAMS_FOLDER, file)
+                icon_path = os.path.join(ASSETS_FOLDER, f"{os.path.splitext(file)[0]}.png")
+                programs.append({"name": os.path.splitext(file)[0], "path": exe_path, "icon": icon_path})
+
+    for program in programs:
+        program_name = program["name"]
+        program_path = program["path"]
+        icon_path = program["icon"]
+
+        icon_size = (70, 70)
+        container_size = (icon_size[0], icon_size[1] + 30)
+
+        icon = create_squircle_icon(icon_path, size=icon_size, radius=15)
+        icon_tk = ImageTk.PhotoImage(icon)
+
+        container = tk.Frame(frame, bg="#000000", width=container_size[0], height=container_size[1])
+        container.grid(row=row, column=column, padx=10, pady=10)
+
+        icon_label = tk.Label(container, image=icon_tk, bg="#000000")
+        icon_label.image = icon_tk
+        icon_label.pack(pady=5)
+
+        name_label = tk.Label(
+            container,
+            text=program_name,
+            bg="#000000",
+            fg="white",
+            font=("Arial", 10),
+            padx=5,
+        )
+        name_label.pack(pady=5)
+
+        def on_enter(event, label):
+            label.config(fg="#32CD32")
+
+        def on_leave(event, label):
+            label.config(fg="white")
+
+        name_label.bind("<Enter>", lambda e, label=name_label: on_enter(e, label))
+        name_label.bind("<Leave>", lambda e, label=name_label: on_leave(e, label))
+        icon_label.bind("<Enter>", lambda e, label=name_label: on_enter(e, label))
+        icon_label.bind("<Leave>", lambda e, label=name_label: on_leave(e, label))
+
+        def open_program(path=program_path):
+            if os.path.exists(path):
+                os.startfile(path)
+            else:
+                print(f"Программа {path} не найдена.")
+
+        icon_label.bind("<Button-1>", lambda e, path=program_path: open_program(path))
+        name_label.bind("<Button-1>", lambda e, path=program_path: open_program(path))
+
+        icon_label.bind("<Button-3>", lambda e, name=program_name: on_program_right_click(e, name, help_texts))
+        name_label.bind("<Button-3>", lambda e, name=program_name: on_program_right_click(e, name, help_texts))
+
+        column += 1
+        if column >= max_columns:
+            column = 0
+            row += 1
+
+def launch_main_program():
+    root = tk.Tk()
+    root.geometry("800x600")
+    root.configure(bg="#000000")
+    root.attributes("-toolwindow", 0)
+
+    root.title("Cloud Checker")
+
+    icon = create_squircle_icon(icon_path="C:\\Users\SQWAT\IdeaProjects\\untitled\Programs\Assets\help\cloud.png", size=(64, 64), radius=15)
+    icon_tk = ImageTk.PhotoImage(icon)
+    root.iconphoto(False, icon_tk)
+    root.minsize(600, 400)
+    root.maxsize(1200, 800)
+
+    root.resizable(True, True)
+
+    root.withdraw()
+
+    show_loading_screen(root, lambda: (root.deiconify(), display_programs(root, help_texts)))
+
+    root.mainloop()
+
+def check_and_create_programs_folder():
+    programs_folder = os.path.join(os.environ["APPDATA"], "Programs")
+    if not os.path.exists(programs_folder):
+        print(f"Папка {programs_folder} не существует. Создаю...")
+        os.makedirs(programs_folder)
+        print(f"Папка {programs_folder} успешно создана.")
+    else:
+        print(f"Папка {programs_folder} уже существует.")
+
+def install_programs():
+    programs_folder = os.path.join(os.environ["APPDATA"], "Programs")
+    help_folder = "Help"
+    assets_folder = "Assets"
+
+    check_and_create_programs_folder()
+
+    if os.path.exists(help_folder):
+        shutil.copytree(help_folder, os.path.join(programs_folder, "Help"))
+    if os.path.exists(assets_folder):
+        shutil.copytree(assets_folder, os.path.join(programs_folder, "Assets"))
+
+if __name__ == "__main__":
+    run_as_admin()
+    launch_main_program()
